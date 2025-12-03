@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>地理植被与气候匹配游戏</title>
+  <!-- 引入外部资源 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#2A7D4F',     // 主色调：自然绿
+            secondary: '#E8F4EA',   // 辅助色：淡绿
+            accent: '#F5A623',      // 强调色：暖橙
+            neutral: '#F8F9FA',     // 中性色：浅灰
+            'neutral-dark': '#343A40' // 深色文本
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .dragging {
+        opacity: 0.7;
+        transform: scale(1.05);
+      }
+      .drop-zone-highlight {
+        @apply ring-4 ring-accent ring-opacity-70;
+      }
+      .correct-drop {
+        @apply ring-4 ring-green-500;
+      }
+      .wrong-drop {
+        @apply ring-4 ring-red-500;
+      }
+      .vegetation-card {
+        @apply bg-white rounded-lg shadow-md p-3 mb-2 cursor-move transition-all duration-300 hover:shadow-lg hover:bg-secondary;
+      }
+    }
+  </style>
+</head>
+<body class="bg-neutral min-h-screen font-sans text-neutral-dark">
+  <!-- 页面头部 -->
+  <header class="bg-primary text-white shadow-lg">
+    <div class="container mx-auto px-4 py-6">
+      <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-center">植被与自然环境 - 气候类型匹配游戏</h1>
+      <p class="text-center mt-2 opacity-90">将右侧的植被类型拖拽到左侧地图上对应的气候区域</p>
+    </div>
+  </header>
+
+  <!-- 主要内容区 -->
+  <main class="container mx-auto px-4 py-8">
+    <!-- 游戏说明 -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+      <h2 class="text-xl font-semibold mb-3 flex items-center">
+        <i class="fa fa-info-circle text-primary mr-2"></i>游戏说明
+      </h2>
+      <p class="mb-2">地球上不同的气候类型孕育了不同的植被。请根据你对气候与植被关系的理解，将右侧的植被类型拖拽到左侧地图上对应的气候区域（A-J）。</p>
+      <div class="flex flex-wrap gap-2 mt-4">
+        <button id="reset-btn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-all flex items-center">
+          <i class="fa fa-refresh mr-2"></i>重置游戏
+        </button>
+        <button id="hint-btn" class="bg-accent hover:bg-accent/90 text-white px-4 py-2 rounded-lg transition-all flex items-center">
+          <i class="fa fa-lightbulb-o mr-2"></i>提示
+        </button>
+      </div>
+    </div>
+
+    <!-- 游戏区域 -->
+    <div class="flex flex-col lg:flex-row gap-6">
+      <!-- 左侧：地图区域 -->
+      <div class="lg:w-2/3 bg-white rounded-xl shadow-md p-4 lg:p-6">
+        <h2 class="text-xl font-semibold mb-4 text-center">世界气候类型分布图</h2>
+        
+        <!-- 地图容器 -->
+        <div class="relative w-full aspect-[16/9.5] bg-secondary rounded-lg overflow-hidden border-2 border-gray-200 object-fit:contain;">
+        <!-- <div class="relative w-full aspect-auto bg-secondary rounded-lg overflow-hidden border-2 border-gray-200"> -->
+          <!-- 这里使用示例地图，实际使用时替换为您的气候分布图 -->
+          <img src="./images/weather1.png" alt="世界气候类型分布图" class="w-full h-full object-cover">
+          
+          <!-- 气候区域标记点 - 实际使用时根据您的图片调整位置 -->
+          <div class="absolute top-[46%] left-[10%] drop-zone" data-climate="A">
+            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold border-2 border-white shadow-md">A</div>
+          </div>
+          
+          <div class="absolute top-[39%] left-[8%] drop-zone" data-climate="B">
+            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold border-2 border-white shadow-md">B</div>
+          </div>
+          
+          <div class="absolute top-[32%] left-[12%] drop-zone" data-climate="C">
+            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold border-2 border-white shadow-md">C</div>
+          </div>
+          
+          <div class="absolute top-[22%] left-[13%] drop-zone" data-climate="D">
+            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold border-2 border-white shadow-md">D</div>
+          </div>
+          
+          <div class="absolute top-[13%] left-[11%] drop-zone" data-climate="E">
+            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold border-2 border-white shadow-md">E</div>
+          </div>
+          
+          <div class="absolute top-[15%] left-[23%] drop-zone" data-climate="F1">
+            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold border-2 border-white shadow-md">F1</div>
+          </div>
+          
+          <div class="absolute top-[18%] left-[30%] drop-zone" data-climate="F2">
+            <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white shadow-md">F2</div>
+          </div>
+          
+          <div class="absolute top-[5%] left-[35%] drop-zone" data-climate="G">
+            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold border-2 border-white shadow-md">G</div>
+          </div>
+          
+          <div class="absolute top-[39%] left-[33%] drop-zone" data-climate="H">
+            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold border-2 border-white shadow-md">H</div>
+          </div>
+          
+          <div class="absolute top-[33%] left-[37%] drop-zone" data-climate="I">
+            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold border-2 border-white shadow-md">I</div>
+          </div>
+          
+          <div class="absolute top-[23%] left-[41%] drop-zone" data-climate="J">
+            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold border-2 border-white shadow-md">J</div>
+          </div>
+          
+          <!-- 放置后的植被标签容器 -->
+          <div id="placed-vegetation" class="absolute inset-0 pointer-events-none"></div>
+        </div>
+        
+        <!-- 气候类型说明 -->
+        <div class="mt-4 bg-gray-50 p-3 rounded-lg text-sm">
+          <p class="font-medium mb-1">气候类型说明：</p>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-1">
+            <div>A: 热带雨林气候</div>
+            <div>B: 热带草原气候</div>
+            <div>C: 热带沙漠气候</div>
+            <div>D: 地中海气候</div>
+            <div>E: 温带海洋性气候</div>
+            <div>F: 温带大陆性气候</div>
+            <div>G: 极地气候</div>
+            <div>H: 热带季风气候</div>
+            <div>I: 亚热带季风气候</div>
+            <div>J: 温带季风气候</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 右侧：植被卡片区域 -->
+      <div class="lg:w-1/3 bg-white rounded-xl shadow-md p-4 lg:p-6">
+        <h2 class="text-xl font-semibold mb-4 text-center">植被类型</h2>
+        
+        <!-- 植被卡片容器 -->
+        <div id="vegetation-container" class="max-h-[600px] overflow-y-auto pr-2">
+          <!-- 植被卡片将通过JS动态生成 -->
+        </div>
+      </div>
+    </div>
+    
+    <!-- 反馈区域 -->
+    <div id="feedback" class="mt-8 p-4 rounded-lg hidden"></div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="bg-primary text-white mt-12 py-6">
+    <div class="container mx-auto px-4 text-center">
+      <p>湘教版高中地理 - 植被与自然环境公开课教学工具</p>
+    </div>
+  </footer>
+
+  <!-- 提示模态框 -->
+  <div id="hint-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+      <h3 class="text-xl font-bold text-primary mb-4">气候与植被对应提示</h3>
+      <div class="space-y-2 max-h-[70vh] overflow-y-auto">
+        <div class="p-2 border-b border-gray-100"><strong>热带雨林气候</strong> → 热带雨林</div>
+        <div class="p-2 border-b border-gray-100"><strong>热带草原气候</strong> → 热带草原</div>
+        <div class="p-2 border-b border-gray-100"><strong>热带沙漠气候</strong> → 热带荒漠</div>
+        <div class="p-2 border-b border-gray-100"><strong>地中海气候</strong> → 亚热带常绿硬叶林</div>
+        <div class="p-2 border-b border-gray-100"><strong>温带海洋性气候</strong> → 温带落叶阔叶林</div>
+        <div class="p-2 border-b border-gray-100"><strong>温带大陆性气候</strong> → 温带草原、温带荒漠</div>
+        <div class="p-2 border-b border-gray-100"><strong>极地气候</strong> → 极地苔原和冰原</div>
+        <div class="p-2 border-b border-gray-100"><strong>热带季风气候</strong> → 热带季雨林</div>
+        <div class="p-2 border-b border-gray-100"><strong>亚热带季风气候</strong> → 亚热带常绿阔叶林</div>
+        <div class="p-2"><strong>温带季风气候</strong> → 温带落叶阔叶林</div>
+      </div>
+      <button id="close-hint" class="mt-4 bg-primary text-white px-4 py-2 rounded-lg w-full">关闭提示</button>
+    </div>
+  </div>
+
+  <script>
+    // 植被类型数据
+    const vegetationTypes = [
+      { id: 'v1', name: '热带雨林', correctClimate: 'A' },
+      { id: 'v2', name: '热带荒漠', correctClimate: 'C' },
+      { id: 'v3', name: '热带草原', correctClimate: 'B' },
+      { id: 'v4', name: '亚热带常绿硬叶林', correctClimate: 'D' },
+      { id: 'v5', name: '温带落叶阔叶林', correctClimate: 'E' },
+      { id: 'v6', name: '温带落叶阔叶林', correctClimate: 'J' },
+      { id: 'v7', name: '热带季雨林', correctClimate: 'H' },
+      { id: 'v8', name: '亚热带常绿阔叶林', correctClimate: 'I' },
+      { id: 'v9', name: '温带草原', correctClimate: 'F1' },
+      { id: 'v10', name: '温带荒漠', correctClimate: 'F2' },
+      { id: 'v11', name: '极地苔原和冰原', correctClimate: 'G' }
+    ];
+
+    // DOM元素
+    const vegetationContainer = document.getElementById('vegetation-container');
+    const dropZones = document.querySelectorAll('.drop-zone');
+    const placedVegetation = document.getElementById('placed-vegetation');
+    const feedbackElement = document.getElementById('feedback');
+    const resetBtn = document.getElementById('reset-btn');
+    const hintBtn = document.getElementById('hint-btn');
+    const hintModal = document.getElementById('hint-modal');
+    const closeHint = document.getElementById('close-hint');
+
+    // 初始化植被卡片
+    function initVegetationCards() {
+      vegetationContainer.innerHTML = '';
+      
+      // 随机排序植被卡片
+      const shuffledVegetation = [...vegetationTypes].sort(() => Math.random() - 0.5);
+      
+      shuffledVegetation.forEach(vegetation => {
+        const card = document.createElement('div');
+        card.id = vegetation.id;
+        card.className = 'vegetation-card';
+        card.draggable = true;
+        card.setAttribute('data-vegetation', vegetation.name);
+        card.setAttribute('data-correct-climate', vegetation.correctClimate);
+        
+        // 添加植被图标
+        let icon = 'fa-leaf';
+        if (vegetation.name.includes('荒漠')) icon = 'fa-sun-o';
+        if (vegetation.name.includes('草原')) icon = 'fa-pagelines';
+        if (vegetation.name.includes('极地')) icon = 'fa-snowflake-o';
+        
+        card.innerHTML = `
+          <div class="flex items-center">
+            <i class="fa ${icon} text-primary mr-2"></i>
+            <span>${vegetation.name}</span>
+          </div>
+        `;
+        
+        vegetationContainer.appendChild(card);
+        
+        // 添加拖拽事件监听
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+      });
+    }
+
+    // 拖拽开始
+    function handleDragStart(e) {
+      this.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', this.id);
+      setTimeout(() => {
+        this.style.visibility = 'hidden';
+      }, 0);
+    }
+
+    // 拖拽结束
+    function handleDragEnd() {
+      this.classList.remove('dragging');
+      this.style.visibility = 'visible';
+      
+      // 移除所有放置区的高亮
+      dropZones.forEach(zone => {
+        zone.classList.remove('drop-zone-highlight');
+      });
+    }
+
+    // 为放置区添加事件监听
+    function setupDropZones() {
+      dropZones.forEach(zone => {
+        zone.addEventListener('dragover', handleDragOver);
+        zone.addEventListener('dragenter', handleDragEnter);
+        zone.addEventListener('dragleave', handleDragLeave);
+        zone.addEventListener('drop', handleDrop);
+      });
+    }
+
+    // 拖拽经过
+    function handleDragOver(e) {
+      e.preventDefault();
+    }
+
+    // 拖拽进入
+    function handleDragEnter(e) {
+      e.preventDefault();
+      this.classList.add('drop-zone-highlight');
+    }
+
+    // 拖拽离开
+    function handleDragLeave() {
+      this.classList.remove('drop-zone-highlight');
+    }
+
+    // 放置
+    function handleDrop(e) {
+      e.preventDefault();
+      this.classList.remove('drop-zone-highlight');
+      
+      const vegetationId = e.dataTransfer.getData('text/plain');
+      const vegetationElement = document.getElementById(vegetationId);
+      
+      if (!vegetationElement) return;
+      
+      const vegetationName = vegetationElement.getAttribute('data-vegetation');
+      const correctClimate = vegetationElement.getAttribute('data-correct-climate');
+      const dropZoneClimate = this.getAttribute('data-climate');
+      
+      // 检查是否已放置
+      const existingPlacement = document.querySelector(`[data-placed-vegetation="${vegetationId}"]`);
+      if (existingPlacement) {
+        existingPlacement.remove();
+      }
+      
+      // 创建放置后的标签
+      const placedLabel = document.createElement('div');
+      placedLabel.className = 'absolute bg-white px-2 py-1 rounded shadow-md text-sm font-medium whitespace-nowrap transform -translate-x-1/2 -translate-y-full';
+      placedLabel.setAttribute('data-placed-vegetation', vegetationId);
+      placedLabel.style.left = `${this.offsetLeft + this.offsetWidth/2}px`;
+      placedLabel.style.top = `${this.offsetTop}px`;
+      placedLabel.textContent = vegetationName;
+      
+      placedVegetation.appendChild(placedLabel);
+      
+      // 检查是否正确
+      if (correctClimate === dropZoneClimate) {
+        // 正确匹配
+        this.classList.add('correct-drop');
+        placedLabel.classList.add('bg-green-100', 'text-green-800');
+        
+        // 短暂延迟后移除高亮
+        setTimeout(() => {
+          this.classList.remove('correct-drop');
+        }, 1500);
+        
+        // 显示正确反馈
+        showFeedback(`正确！${vegetationName}通常生长在${getClimateName(dropZoneClimate)}区。`, 'green');
+        
+        // 禁用已正确放置的植被卡片
+        vegetationElement.classList.add('opacity-50', 'cursor-not-allowed');
+        vegetationElement.draggable = false;
+        
+        // 检查是否全部完成
+        checkCompletion();
+      } else {
+        // 错误匹配
+        this.classList.add('wrong-drop');
+        placedLabel.classList.add('bg-red-100', 'text-red-800');
+        
+        // 错误提示
+        setTimeout(() => {
+          this.classList.remove('wrong-drop');
+          placedLabel.remove();
+          showFeedback(`不正确。${vegetationName}不适合生长在${getClimateName(dropZoneClimate)}区。`, 'red');
+        }, 1500);
+      }
+    }
+
+    // 获取气候名称
+    function getClimateName(code) {
+      const climateMap = {
+        'A': '热带雨林气候',
+        'B': '热带草原气候',
+        'C': '热带沙漠气候',
+        'D': '地中海气候',
+        'E': '温带海洋性气候',
+        'F1': '温带大陆性气候',
+        'F2': '温带大陆性气候',
+        'G': '极地气候',
+        'H': '热带季风气候',
+        'I': '亚热带季风气候',
+        'J': '温带季风气候'
+      };
+      return climateMap[code] || code;
+    }
+
+    // 显示反馈信息
+    function showFeedback(message, type = 'green') {
+      feedbackElement.textContent = message;
+      feedbackElement.className = `mt-8 p-4 rounded-lg`;
+      
+      if (type === 'green') {
+        feedbackElement.classList.add('bg-green-100', 'text-green-800', 'border', 'border-green-200');
+      } else {
+        feedbackElement.classList.add('bg-red-100', 'text-red-800', 'border', 'border-red-200');
+      }
+      
+      feedbackElement.classList.remove('hidden');
+      
+      // 3秒后隐藏反馈
+      setTimeout(() => {
+        feedbackElement.classList.add('hidden');
+      }, 3000);
+    }
+
+    // 检查是否全部完成
+    function checkCompletion() {
+      const total = vegetationTypes.length;
+      const completed = document.querySelectorAll('.vegetation-card:not([draggable])').length;
+      
+      if (completed === total) {
+        setTimeout(() => {
+          showFeedback('恭喜你！已正确匹配所有植被与气候类型！', 'green');
+        }, 1000);
+      }
+    }
+
+    // 重置游戏
+    function resetGame() {
+      // 清空已放置的标签
+      placedVegetation.innerHTML = '';
+      
+      // 重置所有放置区状态
+      dropZones.forEach(zone => {
+        zone.classList.remove('correct-drop', 'wrong-drop');
+      });
+      
+      // 重新初始化植被卡片
+      initVegetationCards();
+      
+      // 隐藏反馈
+      feedbackElement.classList.add('hidden');
+    }
+
+    // 事件监听
+    resetBtn.addEventListener('click', resetGame);
+    
+    hintBtn.addEventListener('click', () => {
+      hintModal.classList.remove('hidden');
+    });
+    
+    closeHint.addEventListener('click', () => {
+      hintModal.classList.add('hidden');
+    });
+    
+    // 点击模态框外部关闭
+    hintModal.addEventListener('click', (e) => {
+      if (e.target === hintModal) {
+        hintModal.classList.add('hidden');
+      }
+    });
+
+    // 初始化
+    function init() {
+      initVegetationCards();
+      setupDropZones();
+    }
+
+    // 启动游戏
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
